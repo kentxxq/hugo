@@ -30,6 +30,7 @@ import (
 
 	"github.com/yuin/goldmark"
 	emoji "github.com/yuin/goldmark-emoji"
+	wikilink "github.com/kentxxq/goldmark-wikilink" //引入解析
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
