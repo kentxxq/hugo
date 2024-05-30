@@ -136,6 +136,14 @@ type Extensions struct {
 	LinkifyProtocol string
 	TaskList        bool
 	CJK             CJK
+
+	// 下面是我们新加的参数
+	// 采用那种方法解析链接?
+	WikilinkReslover string
+	// ROOT模式下,传入路径前缀
+    WikilinkRootPath string
+	// 是否启用wikilink
+	EnableWikilink   bool
 }
 
 // Typographer holds typographer configuration.

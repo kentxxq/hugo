@@ -114,6 +114,28 @@ func newMarkdown(pcfg converter.ProviderConfig) goldmark.Markdown {
 
 	extensions = append(extensions, images.New(cfg.Parser.WrapStandAloneImageWithinParagraph))
 
+	// 加入
+	if mcfg.Goldmark.Extensions.EnableWikilink {
+		switch mcfg.Goldmark.Extensions.WikilinkReslover {
+		case "DefaultResolver":
+			extensions = append(extensions, &wikilink.Extender{
+				Resolver: wikilink.DefaultResolver,
+			})
+		case "PrettyResolver":
+			extensions = append(extensions, &wikilink.Extender{
+				Resolver: wikilink.PrettyResolver,
+			})
+		case "RelResolver":
+			extensions = append(extensions, &wikilink.Extender{
+				Resolver: wikilink.RelResolver,
+			})
+		case "RootResolver":
+			extensions = append(extensions, &wikilink.Extender{
+				Resolver: wikilink.RootResolver(mcfg.Goldmark.Extensions.WikilinkRootPath),
+			})
+		}
+	}
+
 	extensions = append(extensions, extras.New(
 		extras.Config{
 			Insert:      extras.InsertConfig{Enable: cfg.Extensions.Extras.Insert.Enable},

@@ -1,0 +1,117 @@
+name: create-release
+on: [push]
+env:
+  SASS_VERSION: 1.63.2
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+          check-latest: true
+          cache-dependency-path: go.sum
+
+      - name: Install Mage
+        run: go install github.com/magefile/mage@v1.15.0
+
+      # - name: setup dart-sass
+      #   run: |
+      #     curl -LJO "https://github.com/sass/dart-sass/releases/download/${SASS_VERSION}/dart-sass-${SASS_VERSION}-linux-x64.tar.gz"
+      #     tar -xvf "dart-sass-${SASS_VERSION}-linux-x64.tar.gz"
+      #     echo "$GOBIN"
+      #     echo "$GITHUB_WORKSPACE/dart-sass/" >> $GITHUB_PATH
+      #     sass --version;
+      #     mage -v check;
+      #   env:
+      #     HUGO_BUILD_TAGS: extended
+
+      - name: build linux amd64
+        run: |
+          go build -tags extended,release -ldflags "-s -w -extldflags '-static'"
+          mv hugo hugo-linux-amd64
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 1
+
+      - name: Archive Linux artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: hugo-linux-amd64
+          path: hugo-linux-amd64
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+          check-latest: true
+          cache-dependency-path: go.sum
+
+      - name: Install Mage
+        run: go install github.com/magefile/mage@v1.15.0
+
+      # - name: setup dart-sass
+      #   run: |
+      #     curl -LJO "https://github.com/sass/dart-sass/releases/download/${env:SASS_VERSION}/dart-sass-${env:SASS_VERSION}-windows-x64.zip";
+      #     Expand-Archive -Path "dart-sass-${env:SASS_VERSION}-windows-x64.zip" -DestinationPath .;
+      #     echo  "$env:GITHUB_WORKSPACE/dart-sass/" | Out-File -FilePath $Env:GITHUB_PATH -Encoding utf-8 -Append
+      #     mage -v test;
+      #   env:
+      #     HUGO_BUILD_TAGS: extended
+
+      - name: build windows amd64
+        run: |
+          go build -tags extended,release -ldflags "-s -w -extldflags '-static'"
+          mv hugo.exe hugo-windows-amd64.exe
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: 1
+
+      - name: Archive Linux artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: hugo-windows-amd64
+          path: hugo-windows-amd64.exe
+
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: hugo-linux-amd64
+          path: hugo-linux-amd64
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: hugo-windows-amd64
+          path: hugo-windows-amd64.exe
+
+      - name: create-release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: false
+          title: "hugo with wikilink"
+          files: |
+            hugo-linux-amd64
+            hugo-windows-amd64.exe
